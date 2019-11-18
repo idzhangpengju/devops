@@ -1,15 +1,18 @@
 server {
     listen       80;
     server_name  ${NGINX_HOST};
- 
-    #charset koi8-r;
-    #access_log  /data/logs/nginx/test_uoou_net/access.log  main;
+    
+    root   /usr/share/nginx/html/public;
  
     location / {
-        root   /usr/share/nginx/html;
-        index  index.html index.htm;
+        index  index.php index.html index.htm;
+        if (!-e $request_filename){
+             rewrite  ^(.*)$  /index.php?s=/$1  last;
+        }
     }
  
+
+
     #error_page  404              /404.html;
  
     # redirect server error pages to the static page /50x.html
@@ -19,16 +22,18 @@ server {
         root   /usr/share/nginx/html;
     }
 
-    location ~ \.php$ {
-        fastcgi_pass  php-fpm:9000;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME  /usr/share/nginx/html$fastcgi_script_name;
-        include       fastcgi_params;
-    }
+        location ~ .+\.php($|/) {
+            fastcgi_index index.php;
+            fastcgi_split_path_info ^(.+\.php)(.*)$;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
+            fastcgi_pass  php-fpm:9000;
+        }
 
     location ~ /\.(htaccess|git|gitignore) {
         deny all;
     }                
 
 }
-
